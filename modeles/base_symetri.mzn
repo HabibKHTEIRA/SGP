@@ -10,16 +10,16 @@ set of int: GOLFEURS = 1..q;
 set of int: SEMAINES = 1..w;
 set of int: GROUPES  = 1..g;
 
+
+
+
+array[SEMAINES, GROUPES] of var set of GOLFEURS: Groupes;
+
 constraint assert(q = p*g, "q doit être égal à p*g");
 constraint assert(
   w*g*p*(p-1) div 2 <= q*(q-1) div 2,
   "Nombre maximum de rencontres dépassé"
 );
-
-
-array[SEMAINES, GROUPES] of var set of GOLFEURS: Groupes;
-
-
 
 % Taille des groupes
 constraint forall(s in SEMAINES, gr in GROUPES)(
