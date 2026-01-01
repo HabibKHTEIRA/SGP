@@ -8,11 +8,11 @@ class setVariable:
             raise Exception("lower bound d'une variable doit être inclus dans le upper bound")
     
     @property
-    def lower_bound(self):
+    def lower_bound(self) -> set[int]:
         return self._lower_bound.copy()
 
     @property
-    def upper_bound(self):
+    def upper_bound(self) -> set[int]:
         return self._upper_bound.copy()
     
     def determined(self):
