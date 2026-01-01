@@ -1,1 +1,1 @@
-from .vars import setVariable
+from .solver import SetSolver

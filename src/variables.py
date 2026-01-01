@@ -1,4 +1,4 @@
-class setVariable:
+class SetVariable:
     def __init__(self, name, lower_bound = None, upper_bound = None):
         self.name = name
         self._lower_bound: set[int] = set() if lower_bound is None else set(lower_bound)

@@ -1,16 +1,16 @@
 from abc import ABC, abstractmethod
-from src import setVariable
+from src.variables import SetVariable
 
-class Constraints(ABC):
+class Constraint(ABC):
     def __init__(self, vars: list[str]):
         self.vars = vars
     
     @abstractmethod
-    def reduction(self, variables: dict[str, setVariable]) -> set[str]:
+    def reduction(self, variables: dict[str, SetVariable]) -> set[str]:
         pass
 
     @abstractmethod
-    def evaluate(self, variables: dict[str, setVariable]) -> bool:
+    def evaluate(self, variables: dict[str, SetVariable]) -> bool:
         """
             verifie qu'une contrainte est satisfaite par l'assignation actuelle des valeurs
             elle retourne True ssi une borne inferieure du resultat est égale à l'union
@@ -25,7 +25,7 @@ class Constraints(ABC):
 
 
 
-class Union(Constraints):
+class Union(Constraint):
     def __init__(self, vars, result):
         super().__init__(vars)
         self.result = result
@@ -54,7 +54,7 @@ class Union(Constraints):
 
 
 
-class Intersection(Constraints):
+class Intersection(Constraint):
     def __init__(self, vars, result):
         super().__init__(vars)
         self.result = result
@@ -86,7 +86,7 @@ class Intersection(Constraints):
 
     
     
-class CardinalityConstraint(Constraints):
+class CardinalityConstraint(Constraint):
     def __init__(self, vars, card):
         super().__init__(vars)
         self.card = card
@@ -130,7 +130,7 @@ class CardinalityConstraint(Constraints):
 
 
     
-class IntersectionCardinalityConstraint(Constraints):
+class IntersectionCardinalityConstraint(Constraint):
     def __init__(self, vars, max_intersections):
         super().__init__(vars)
         self.max_intersections = max_intersections
