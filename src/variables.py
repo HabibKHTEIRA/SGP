@@ -4,6 +4,9 @@ class SetVariable:
         self._lower_bound: set[int] = set() if lower_bound is None else set(lower_bound)
         self._upper_bound: set[int] = set() if upper_bound is None else set(upper_bound)
 
+        self.initial_lower_bound = self._lower_bound.copy()
+        self.initial_upper_bound = self._upper_bound.copy()
+
         if not self._lower_bound.issubset(self._upper_bound):
             raise Exception("lower bound d'une variable doit être inclus dans le upper bound")
     
@@ -17,6 +20,10 @@ class SetVariable:
     
     def determined(self):
         return self._lower_bound == self._upper_bound
+    
+    def reset(self):
+        self._lower_bound = self.initial_lower_bound.copy()
+        self._upper_bound = self.initial_upper_bound.copy()
     
     def __str__(self):
         return f"{self.name} lower bound: {self._lower_bound} , upper bound: {self._upper_bound}"

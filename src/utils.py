@@ -3,11 +3,16 @@ from dataclasses import dataclass
 
 class VariableStrategy(Enum):
     RANDOM = "random"
-    SMALLEST_DOMAIN = "smallest_domain"
+    MINIMUM_REMAINING_VALUES = "minimum_values_left"
+    LEAST_CONSTRAINTS ="least_constraints"
+    MOST_CONSTRAINTS  = "most_constraints"
 
+class RestartException(Exception):
+    pass
 
 class ValueStrategy(Enum):
     RANDOM = "random"
+    LEAST_USED = "least_used"
 
 class OperationType(Enum):
     ADD : int
@@ -22,4 +27,4 @@ class Operation:
 
 @dataclass(frozen= True)
 class NoGood:
-    pass
+    path: frozenset[tuple[str, bool, int]]
