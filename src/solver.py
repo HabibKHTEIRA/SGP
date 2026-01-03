@@ -16,9 +16,11 @@ class SetSolver:
         self.constraints: list[Constraint] = list()
         self.nb_var_values: dict[str, dict[int, int]] = {}
 
+
         self.operations_history: list[Operation] = list()
         self.solution: list[Operation] = list()
         self.visited_states: set[tuple[Operation, ...]] = set()
+        self.cache = {}
 
         self.current_depth = 0
         self.cpt_since_random_selection = 0
@@ -180,7 +182,7 @@ class SetSolver:
         self.visited_states.add(path)
 
         try:
-            current_state = None # calcule de l'état courrant à partir du current_path
+            current_state = self._path_to_state(current_path) # calcule de l'état courrant à partir du current_path
         except ValueError:
             self._learn_nogood(current_path)
             return None
@@ -217,3 +219,30 @@ class SetSolver:
         
         self._learn_nogood(current_path) # no good globale
         return None
+    
+    def _path_to_state(self, path : tuple[Operation, ...]) -> dict[str, SetVariable]:
+        key = tuple(
+            sorted((operation.variable, operation.operation_type, operation.depth) for operation in path )
+        )
+
+        if key in self.cache:
+            return self.cache[key]
+        
+        current_state = self.variables.copy()
+
+        for operation in path:
+            var = current_state[operation.variable]
+            if operation.operation_type == OperationType.ADD:
+                var._lower_bound.add(operation.value)
+            else:
+                var._upper_bound.remove(operation.value)
+        
+        changed = True
+        while changed:
+            changed = False
+            for constraint in self.constraints:
+                if constraint.reduction(current_state):
+                    changed = True
+        
+        self.cache[key] = current_state
+        return current_state 
