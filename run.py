@@ -2,7 +2,7 @@ from src import SetSolver, SetVariable, CardinalityConstraint, IntersectionCardi
 
 from itertools import combinations, product
 
-def solve_social_golfer(num_groups, group_size, num_weeks):
+def solve_social_golfer(num_weeks, num_groups, group_size):
     total_players = num_groups * group_size
     all_players = set(range(total_players))
 
@@ -43,10 +43,8 @@ def solve_social_golfer(num_groups, group_size, num_weeks):
     for w in range(num_weeks):
         week_groups[f"W{w}G0"]._lower_bound.add(0)
 
-    result = solver.solve()
-    print(result)
-    return result
+    return solver.solve()
 
 
 if __name__ == "__main__":
-    solve_social_golfer(4, 4, 4)
+    print(solve_social_golfer(4, 3, 3))

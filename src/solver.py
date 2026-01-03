@@ -8,7 +8,7 @@ import random
 class SetSolver:
     RESTART_THRESHOLD = 10
     TOP_K = 3
-    MAX_DEPTH = 100
+    MAX_DEPTH = 40
     def __init__(self, variable_strategy = None, valeur_strategy= None):
         self.nogoods: set[NoGood]                = set()
         self.variable_strategy: VariableStrategy = variable_strategy if variable_strategy else VariableStrategy.MOST_CONSTRAINTS
@@ -113,6 +113,7 @@ class SetSolver:
             # reinit historique
             self.solution.clear()
             self.operations_history.clear()
+            self.visited_states.clear()
 
             # reinit des variables
             for var in self.variables.values():
@@ -167,9 +168,9 @@ class SetSolver:
                 return self._solve([])
             except RestartException:
                 continue
-            # except Exception as e:
-            #     print(str(e))
-            #     return None
+            except Exception as e:
+                print(str(e))
+                return None
 
 
 
@@ -179,7 +180,7 @@ class SetSolver:
             return None
         
         if self._restart():
-            raise RestartException
+            return None
         
         self.branches += 1
         print(f"current_depth {self.current_depth} , branches: {self.branches}")
@@ -187,13 +188,14 @@ class SetSolver:
         path = tuple(current_path)
 
         if path in self.visited_states:
-            print("iciii")
             return None
         self.visited_states.add(path)
 
         try:
             current_state = self._path_to_state(path) # calcule de l'état courrant à partir du current_path
-        except ValueError:
+            if not current_state:
+                raise Exception()
+        except Exception:
             self._learn_nogood(current_path)
             return None
         self.current_depth = len(current_path)
@@ -245,7 +247,10 @@ class SetSolver:
             if operation.operation_type == OperationType.ADD:
                 var._lower_bound.add(operation.value)
             else:
-                var._upper_bound.remove(operation.value)
+                if operation.value in var._upper_bound:
+                    var._upper_bound.remove(operation.value)
+                else:
+                    return None
         
         changed = True
         while changed:
@@ -254,5 +259,5 @@ class SetSolver:
                 if constraint.reduction(current_state):
                     changed = True
         
-        self.cache[key] = current_state
+        self.cache[key] = copy.deepcopy(current_state)
         return current_state 
