@@ -10,8 +10,8 @@ class SetSolver:
     MAX_DEPTH = 100
     def __init__(self, variable_strategy = None, valeur_strategy= None):
         self.nogoods: set[NoGood]                = set()
-        self.variable_strategy: VariableStrategy = variable_strategy if variable_strategy else VariableStrategy.RANDOM
-        self.valeur_strategy: ValueStrategy      = valeur_strategy if valeur_strategy else ValueStrategy.RANDOM
+        self.variable_strategy: VariableStrategy = variable_strategy if variable_strategy else VariableStrategy.MOST_CONSTRAINTS
+        self.valeur_strategy: ValueStrategy      = valeur_strategy if valeur_strategy else ValueStrategy.LEAST_USED
         self.variables: dict[str, SetVariable] = {}
         self.constraints: list[Constraint] = list()
         self.nb_var_values: dict[str, dict[int, int]] = {}
@@ -26,6 +26,7 @@ class SetSolver:
         self.cpt_since_random_selection = 0
         self.cpt_since_restart =0
         self.nogoods_learned  =0
+        self.branches =0
 
         self.restarting = True
         
@@ -106,13 +107,14 @@ class SetSolver:
             self.cpt_since_random_selection =0
             self.cpt_since_restart =0
             self.current_depth =0
+            self.branches =0
 
             # reinit historique
             self.solution.clear()
             self.operations_history.clear()
 
             # reinit des variables
-            for var in self.variables.values:
+            for var in self.variables.values():
                 var.reset() # non encore implementé
             
             # reinitialisation de nb_var_values
@@ -139,7 +141,7 @@ class SetSolver:
     def _is_nogood(self, current_path: list[Operation]) -> bool:
         # transformer le chemin actuel en dict d'assignations uniques
         current_assignments = {
-            op.variable: (op.variable, op.op_type == OperationType.ADD, op.value)
+            op.variable: (op.variable, op.operation_type == OperationType.ADD, op.value)
             for op in current_path
         }
 
@@ -162,7 +164,8 @@ class SetSolver:
                 return self._solve([])
             except RestartException:
                 continue
-            except Exception:
+            except Exception as e:
+                print(str(e))
                 return None
 
 
@@ -175,14 +178,18 @@ class SetSolver:
         if self._restart():
             raise RestartException
         
+        self.branches += 1
+        print(f"current_depth {self.current_depth} , branches: {self.branches}")
+        
         path = tuple(current_path)
 
-        if path in self.visited_states:
-            return None
+        # if path in self.visited_states:
+        #     print("iciii")
+        #     return None
         self.visited_states.add(path)
 
         try:
-            current_state = self._path_to_state(current_path) # calcule de l'état courrant à partir du current_path
+            current_state = self._path_to_state(path) # calcule de l'état courrant à partir du current_path
         except ValueError:
             self._learn_nogood(current_path)
             return None

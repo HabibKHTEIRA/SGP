@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, auto
 from dataclasses import dataclass
 
 class VariableStrategy(Enum):
@@ -15,8 +15,8 @@ class ValueStrategy(Enum):
     LEAST_USED = "least_used"
 
 class OperationType(Enum):
-    ADD : int
-    REMOVE: int
+    ADD = auto()
+    REMOVE= auto()
 
 @dataclass(frozen= True)
 class Operation:

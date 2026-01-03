@@ -10,16 +10,19 @@ class SetVariable:
         if not self._lower_bound.issubset(self._upper_bound):
             raise Exception("lower bound d'une variable doit être inclus dans le upper bound")
     
-    @property
     def lower_bound(self) -> set[int]:
         return self._lower_bound.copy()
 
-    @property
     def upper_bound(self) -> set[int]:
         return self._upper_bound.copy()
     
     def determined(self):
         return self._lower_bound == self._upper_bound
+    
+    def update(self, values: set[int]):
+        if not values.issubset(self._upper_bound):
+            raise Exception(f"Impossible d'ajouter des valeurs {values} au lower bound de {self.name} : certaines ne sont pas dans l'upper bound")
+        self._lower_bound.update(values)
     
     def reset(self):
         self._lower_bound = self.initial_lower_bound.copy()

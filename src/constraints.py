@@ -110,7 +110,7 @@ class CardinalityConstraint(Constraint):
         if len(variables[self.vars[0]].upper_bound()) == self.card:
             if variables[self.vars[0]].lower_bound() != variables[self.vars[0]].upper_bound():
                 variables[self.vars[0]]._lower_bound = variables[self.vars[0]].upper_bound()
-                changed.add(variables[self.vars[0]]) 
+                changed.add(self.vars[0]) 
             return changed
         left_to_find = self.card - len(variables[self.vars[0]].lower_bound())
         left_optional = variables[self.vars[0]].upper_bound() - variables[self.vars[0]].lower_bound()
