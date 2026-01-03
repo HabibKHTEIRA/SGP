@@ -18,6 +18,12 @@ class OperationType(Enum):
     ADD = auto()
     REMOVE= auto()
 
+    def __gt__(self, other):
+        return self.value > other.value
+
+    def __lt__(self, other):
+        return self.value > other.value
+
 @dataclass(frozen= True)
 class Operation:
     variable: str

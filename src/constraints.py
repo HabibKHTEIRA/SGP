@@ -129,38 +129,52 @@ class CardinalityConstraint(Constraint):
     
 
 
-    
+
 class IntersectionCardinalityConstraint(Constraint):
+
     def __init__(self, vars, max_intersections):
         super().__init__(vars)
         self.max_intersections = max_intersections
-    
-    def reduction(self, variables):
-        changed = set()
-        
-        # verificatin lower bound
-        intersection = variables[self.vars[0]].lower_bound().intersection(variables[self.vars[1]].lower_bound())
-        if len(intersection) > self.max_intersections:
-            raise Exception(f"IntersectionCardinalityConstraint: nb d'élements de l'intersection des lower bounds des variables dépassent {self.max_intersections}")
-        
-        # filtrage des upper bouns
-        for value in variables[self.vars[0]].upper_bound():
-            if value not in variables[self.vars[0]].lower_bound():
-                intersection_ = len(intersection) + len({value}.intersection(variables[self.vars[1]].lower_bound()))
-                if intersection_ > self.max_intersections:
-                    variables[self.vars[0]]._upper_bound.remove(value)
-                    changed.add(self.vars[0])
-        
-        for value in variables[self.vars[1]].upper_bound():
-            if value not in variables[self.vars[1]].lower_bound():
-                intersection_ = len(intersection) + len({value}.intersection(variables[self.vars[0]].lower_bound()))
-                if intersection_ > self.max_intersections:
-                    variables[self.vars[1]]._upper_bound.remove(value)
-                    changed.add(self.vars[1])
+
+    def reduction(self, variables) -> bool:
+        x = variables[self.vars[0]]
+        y = variables[self.vars[1]]
+
+        changed = False
+
+        # Recalcul systématique
+        lb_x = x.lower_bound()
+        lb_y = y.lower_bound()
+        ub_x = x.upper_bound().copy()
+        ub_y = y.upper_bound().copy()
+
+        intersection_lb = lb_x & lb_y
+
+        # Incohérence immédiate
+        if len(intersection_lb) > self.max_intersections:
+            raise ValueError(
+                f"IntersectionCardinalityConstraint: |LB(x) ∩ LB(y)| > {self.max_intersections}"
+            )
+
+        # Filtrage UB(x)
+        for v in ub_x:
+            if v in lb_x:
+                continue
+            if v in lb_y and len(intersection_lb) + 1 > self.max_intersections:
+                x._upper_bound.remove(v)
+                changed = True
+
+        # Filtrage UB(y)
+        for v in ub_y:
+            if v in lb_y:
+                continue
+            if v in lb_x and len(intersection_lb) + 1 > self.max_intersections:
+                y._upper_bound.remove(v)
+                changed = True
+
         return changed
 
-    def evaluate(self, variables):
-        return len(variables[self.vars[0]].lower_bound().intersection(variables[self.vars[1]].lower_bound())) <= self.max_intersections
-    
-    def get_variables(self):
-        return super().get_variables()
+    def evaluate(self, variables) -> bool:
+        x = variables[self.vars[0]]
+        y = variables[self.vars[1]]
+        return len(x.lower_bound() & y.lower_bound()) <= self.max_intersections

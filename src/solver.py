@@ -1,6 +1,7 @@
 from .variables import SetVariable
 from .utils import NoGood, ValueStrategy, VariableStrategy, Operation, RestartException, NoGood, OperationType
 from .constraints import Constraint
+import copy
 
 import random
 
@@ -129,7 +130,7 @@ class SetSolver:
         operations= set()
         for operation in reversed(current_path):
             if not any(a[0] == operation.variable for a in operations): # verifie qu'un operation n'existe pas déja
-                operations.add(operation.variable, operation.operation_type == OperationType.ADD, operation.value )
+                operations.add((operation.variable, operation.operation_type == OperationType.ADD, operation.value))
 
     def _learn_nogood(self, failed_path: list[Operation]):
         if failed_path:
@@ -139,22 +140,24 @@ class SetSolver:
                 self.nogoods_learned +=1
     
     def _is_nogood(self, current_path: list[Operation]) -> bool:
-        # transformer le chemin actuel en dict d'assignations uniques
         current_assignments = {
             op.variable: (op.variable, op.operation_type == OperationType.ADD, op.value)
             for op in current_path
         }
 
         for nogood in self.nogoods:
-            # vérifier si toutes les assignations du nogood sont présentes et identiques
+            if nogood is None:
+                continue  # sécurité absolue
+
             if all(
                 current_assignments.get(var[0]) == var
-                for var in nogood.assignments
+                for var in nogood.path
             ):
                 self.metrics.nogood_hits += 1
                 return True
 
         return False
+
 
 
 
@@ -164,9 +167,9 @@ class SetSolver:
                 return self._solve([])
             except RestartException:
                 continue
-            except Exception as e:
-                print(str(e))
-                return None
+            # except Exception as e:
+            #     print(str(e))
+            #     return None
 
 
 
@@ -183,9 +186,9 @@ class SetSolver:
         
         path = tuple(current_path)
 
-        # if path in self.visited_states:
-        #     print("iciii")
-        #     return None
+        if path in self.visited_states:
+            print("iciii")
+            return None
         self.visited_states.add(path)
 
         try:
@@ -235,8 +238,8 @@ class SetSolver:
         if key in self.cache:
             return self.cache[key]
         
-        current_state = self.variables.copy()
-
+        #current_state = self.variables.copy()
+        current_state = copy.deepcopy(self.variables)
         for operation in path:
             var = current_state[operation.variable]
             if operation.operation_type == OperationType.ADD:
