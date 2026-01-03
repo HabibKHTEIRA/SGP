@@ -25,7 +25,7 @@ class SetSolver:
         self.cpt_since_restart =0
         self.nogoods_learned  =0
 
-        self.restarting = False
+        self.restarting = True
         
 
 
@@ -154,20 +154,66 @@ class SetSolver:
 
 
 
-    def solve(self) -> dict[str, set] |None:
-        try:
-            while not self.restarting:
-                try:
-                    self.restarting = False
-                    return self._solve()
-                except RestartException:
-                    pass
-        except Exception as e:
-            print(f"erreur: {str(e)}")
+    def solve(self) -> dict[str, set] | None:
+        while True:
+            try:
+                return self._solve([])
+            except RestartException:
+                continue
+            except Exception:
+                return None
+
+
+
+    def _solve(self, current_path: list[Operation]) ->dict[str, set]| None:
+
+        if self._is_nogood(current_path):
             return None
-
-
-
-    def _solve(self):
-        pass
         
+        if self._restart():
+            raise RestartException
+        
+        path = tuple(current_path)
+
+        if path in self.visited_states:
+            return None
+        self.visited_states.add(path)
+
+        try:
+            current_state = None # calcule de l'état courrant à partir du current_path
+        except ValueError:
+            self._learn_nogood(current_path)
+            return None
+        self.current_depth = len(current_path)
+
+        if all(constraint.evaluate(current_state) for constraint in self.constraints):
+            self.solution = {name: variable.lower_bound() for name, variable in current_state.items()}
+            self.solution_path = current_path.copy()
+            return self.solution
+        
+        variable_tuple = self._choose_variable(current_state)
+        if variable_tuple is None:
+            self._learn_nogood(current_path)
+            return None
+        variable_name, var = variable_tuple
+        values = self._choose_value(var)
+        for value in values:
+            self.nb_var_values[variable_name][value] +=1
+            add_operation = Operation(variable_name, OperationType.ADD, value, len(current_path)) # added in lower bound
+            self.operations_history.append(add_operation)
+            solution = self._solve(current_path + [add_operation])
+
+            if solution:
+                self.solution = solution
+                return solution
+            
+            remove_operation = Operation(variable_name, OperationType.REMOVE, value, len(current_path)) # removed in upper bound
+            self.operations_history.append(remove_operation)
+            solution = self._solve(current_path + [remove_operation])
+
+            if solution:
+                self.solution = solution
+                return solution
+        
+        self._learn_nogood(current_path) # no good globale
+        return None
