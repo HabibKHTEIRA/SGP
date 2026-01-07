@@ -50,13 +50,19 @@ constraint forall(j1, j2 in GOLFEURS where j1 < j2)(
 
 % On peut forcer le joueur 1 à prendre les premiers groupes de chaque semaine
 % pour fixer "l'étalon".
-%constraint Planning_Joueur[1] = { k*g + 1 | k in 0..w-1 };
+constraint Planning_Joueur[1] = { k*g + 1 | k in 0..w-1 };
 
 solve satisfy;
 
 % --- Affichage ---
 % L'affichage est un peu plus complexe car on doit reconstruire la vue "Groupe"
+% --- Affichage reconstructif ---
 output [
-  "Planning Joueur " ++ show(j) ++ ": " ++ show(Planning_Joueur[j]) ++ "\n"
-  | j in GOLFEURS
+  "Semaine " ++ show(s) ++ ": " ++
+  concat([
+    % Pour chaque groupe de la semaine, on retrouve les joueurs qui ont ce créneau (slot)
+    show({ j | j in GOLFEURS where ((s-1)*g + gr) in Planning_Joueur[j] }) ++ " "
+    | gr in 1..g
+  ]) ++ "\n"
+  | s in 1..w
 ];
