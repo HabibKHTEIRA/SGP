@@ -20,7 +20,7 @@ class SetSolver:
 
         self.operations_history: list[Operation] = list()
         self.solution: list[Operation] = list()
-        self.visited_states: set[tuple[Operation, ...]] = set()
+        self.visited_states: set[tuple] = set()
         self.cache = {}
 
         self.current_depth = 0
@@ -159,7 +159,17 @@ class SetSolver:
 
         return False
 
-
+    def _state_signature(self, state: dict[str, SetVariable]) -> tuple:
+            return tuple(
+                sorted(
+                    (
+                        name,
+                        frozenset(var.lower_bound()),
+                        frozenset(var.upper_bound())
+                    )
+                    for name, var in state.items()
+                )
+            )
 
 
     def solve(self) -> dict[str, set] | None:
@@ -187,9 +197,7 @@ class SetSolver:
         
         path = tuple(current_path)
 
-        if path in self.visited_states:
-            return None
-        self.visited_states.add(path)
+       
 
         try:
             current_state = self._path_to_state(path) # calcule de l'état courrant à partir du current_path
@@ -199,6 +207,11 @@ class SetSolver:
             self._learn_nogood(current_path)
             return None
         self.current_depth = len(current_path)
+
+        state_signature = self._state_signature(current_state)
+        if state_signature in self.visited_states:
+            return None
+        self.visited_states.add(state_signature)
 
         if all(constraint.evaluate(current_state) for constraint in self.constraints):
             self.solution = {name: variable.lower_bound() for name, variable in current_state.items()}
