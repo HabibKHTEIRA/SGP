@@ -13,7 +13,7 @@ set of int: GROUPES = 1..g;
 constraint assert(q = p*g, "q doit etre êgal à p*g");
 constraint assert(w*g*p*(p-1) div 2 <= q*(q-1) div 2, "Nombre maximum des groupes possible");
 
-%varaibles
+%variables
 array [SEMAINES, GROUPES] of var set of GOLFEURS: Groupes;
 
 %contraintes
@@ -33,11 +33,11 @@ constraint forall(i in SEMAINES)(
 constraint forall(s1, s2 in SEMAINES where s1 < s2)(
     forall(g1, g2 in GROUPES)(
         card(Groupes[s1, g1] intersect Groupes[s2, g2]) <= 1
-    )  
+    )
 );
 
 solve satisfy;
 
 output [
     "Semaine " ++ show(i) ++ ": " ++ concat([ show(Groupes[i, j]) ++ " " | j in GROUPES ]) ++ "\n" | i in SEMAINES ];
-    
+
