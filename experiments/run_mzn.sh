@@ -2,53 +2,47 @@
 
 # Usage: ./run_mzn.sh mon_programme.mzn [repertoire_instances] [fichier_sortie.csv]
 
-# Vérification des paramètres
 if [ $# -lt 1 ]; then
     echo "Usage: $0 <programme.mzn> [repertoire_instances] [fichier_sortie.csv]"
     exit 1
 fi
 
 PROGRAM=$1
-DIR=${2:-instances}        # dossier par défaut
-OUTPUT=${3:-resultats.csv} # fichier CSV par défaut
-TIMEOUT_SEC=10             # temps max par instance
+DIR=${2:-instances}
+OUTPUT=${3:-resultats.csv}
+TIMEOUT_SEC=10
 
-# Vérifie que le programme existe
 if [ ! -f "$PROGRAM" ]; then
     echo "Le fichier $PROGRAM n'existe pas."
     exit 1
 fi
 
-# Initialise le fichier CSV
-echo "Instance,Resultat,Temps(s)" > "$OUTPUT"
+# En-tête CSV avec temps avant résultat
+echo "Instance,Temps(s),Resultat" > "$OUTPUT"
 
-# Parcourt tous les fichiers .dzn dans le répertoire
 for INSTANCE in "$DIR"/*.dzn; do
     if [ -f "$INSTANCE" ]; then
         echo "Traitement de $INSTANCE..."
 
-        # Mesure du temps d'exécution
+        # Mesure du temps
         START=$(date +%s.%N)
-
-        # Exécution de MiniZinc avec timeout
         RESULT=$(timeout ${TIMEOUT_SEC}s minizinc "$PROGRAM" "$INSTANCE" 2>&1)
         STATUS=$?
-
         END=$(date +%s.%N)
         ELAPSED=$(echo "$END - $START" | bc)
 
-        # Gestion du statut
+        # Gestion des statuts
         if [ $STATUS -eq 124 ]; then
             RESULT_CSV="TIMEOUT"
         elif [ $STATUS -ne 0 ]; then
             RESULT_CSV="ERREUR"
         else
-            # Nettoyage du résultat pour CSV
             RESULT_CSV=$(echo "$RESULT" | tr '\n' ' ' | sed 's/ $//')
+            RESULT_CSV="\"$RESULT_CSV\""
         fi
 
-        # Ajout au CSV
-        echo "$(basename "$INSTANCE"),$RESULT_CSV,$ELAPSED" >> "$OUTPUT"
+        # Ajout au CSV avec temps avant résultat
+        echo "$(basename "$INSTANCE"),$ELAPSED,$RESULT_CSV" >> "$OUTPUT"
     fi
 done
 
