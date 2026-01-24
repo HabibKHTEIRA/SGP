@@ -317,7 +317,12 @@ Le processus global peut se décrire comme suit :
     Si toutes les possibilités sont épuisées, un \emph{nogood} est appris et le solveur revient en arrière.
 
 \end{enumerate}
-
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{2.png}
+    \caption{Architecture du solveur ensembliste}
+    \label{fig:monimage}
+\end{figure}
 Ce mécanisme permet au solveur d'explorer efficacement l'espace combinatoire tout en évitant de répéter des chemins déjà identifiés comme impossibles, et en profitant de la propagation des contraintes pour réduire l'espace de recherche.
 
 \subsection{Algorithme du solveur}
