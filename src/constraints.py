@@ -62,13 +62,13 @@ class Intersection(Constraint):
     def reduction(self, variables):
         changed = set()
 
-        upper = variables[self.vars(0)].upper_bound().intersection(variables[self.vars[1]].upper_bound())
+        upper = variables[self.vars[0]].upper_bound().intersection(variables[self.vars[1]].upper_bound())
 
         if not variables[self.result].upper_bound().issubset(upper):
             variables[self.result]._upper_bound = upper
             changed.add(self.result)
         
-        lower = variables[self.vars(0)].lower_bound().intersection(variables[self.vars[1]].lower_bound())
+        lower = variables[self.vars[0]].lower_bound().intersection(variables[self.vars[1]].lower_bound())
 
         if not variables[self.result].lower_bound().issubset(lower):
             variables[self.result]._lower_bound = lower

@@ -8,7 +8,7 @@ import random
 class SetSolver:
     RESTART_THRESHOLD = 10
     TOP_K = 3
-    MAX_DEPTH = 40
+    MAX_DEPTH = 1000
     def __init__(self, variable_strategy = None, valeur_strategy= None):
         self.nogoods: set[NoGood]                = set()
         self.variable_strategy: VariableStrategy = variable_strategy if variable_strategy else VariableStrategy.MOST_CONSTRAINTS
@@ -25,12 +25,8 @@ class SetSolver:
 
         self.current_depth = 0
         self.cpt_since_random_selection = 0
-        self.cpt_since_restart =0
         self.nogoods_learned  =0
-        self.branches =0
-
-        self.restarting = True
-        
+        self.branches =0        
 
 
 
@@ -106,9 +102,9 @@ class SetSolver:
         if self.current_depth >= self.MAX_DEPTH:
             # reinit métriques:
             self.cpt_since_random_selection =0
-            self.cpt_since_restart =0
             self.current_depth =0
             self.branches =0
+            self.cache = {}
 
             # reinit historique
             self.solution.clear()
@@ -154,7 +150,6 @@ class SetSolver:
                 current_assignments.get(var[0]) == var
                 for var in nogood.path
             ):
-                self.metrics.nogood_hits += 1
                 return True
 
         return False
