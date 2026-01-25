@@ -10,7 +10,7 @@ fi
 PROGRAM=$1
 DIR=${2:-instances}
 OUTPUT=${3:-resultats.csv}
-TIMEOUT_SEC=10
+TIMEOUT_SEC=100
 
 if [ ! -f "$PROGRAM" ]; then
     echo "Le fichier $PROGRAM n'existe pas."
