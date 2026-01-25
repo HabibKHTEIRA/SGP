@@ -1,13 +1,25 @@
 import pandas as pd
 import argparse
 import matplotlib
+import os
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 def generer_graphique():
-    parser = argparse.ArgumentParser(description="Graphique des temps avec détection de timeout (>100s).")
+    parser = argparse.ArgumentParser(description="Génère et sauvegarde un graphique de performance.")
     parser.add_argument("csv_file", help="Chemin du fichier CSV")
     args = parser.parse_args()
+
+    # --- EXTRACTION DU NOM DU MODÈLE ET PRÉPARATION DU DOSSIER ---
+    # On récupère le nom du fichier sans l'extension (ex: 'res_base')
+    nom_base = os.path.splitext(os.path.basename(args.csv_file))[0]
+
+    # Création du dossier 'graphiques' s'il n'existe pas
+    dossier_sortie = "graphiques"
+    if not os.path.exists(dossier_sortie):
+        os.makedirs(dossier_sortie)
+
+    chemin_sauvegarde = os.path.join(dossier_sortie, f"{nom_base}_graphe.png")
 
     try:
         df = pd.read_csv(args.csv_file)
@@ -20,51 +32,48 @@ def generer_graphique():
         df = df.dropna(subset=[col_temps])
         df = df.sort_values(by=col_nom)
 
-        # --- LOGIQUE DE FILTRAGE ET COULEURS ---
-        couleurs_barres = []
-        indices_trop_longs = []
-
-        # On crée une copie pour ne pas corrompre les données originales si besoin
-        temps_a_afficher = []
-
-        for i, row in df.iterrows():
-            if row[col_temps] > 100:
-                temps_a_afficher.append(0)    # Barre à 0
-                couleurs_barres.append('red') # (Optionnel car barre invisible)
-                indices_trop_longs.append(row[col_nom])
-            else:
-                temps_a_afficher.append(row[col_temps])
-                couleurs_barres.append('royalblue')
-
     except Exception as e:
-        print(f"Erreur : {e}")
+        print(f"Erreur lors de la lecture : {e}")
         return
 
-    # --- CRÉATION DU GRAPHIQUE ---
-    plt.figure(figsize=(14, 8))
-
-    # On utilise temps_a_afficher (avec les 0 pour les > 100s)
-    bars = plt.bar(df[col_nom], temps_a_afficher, color=couleurs_barres, edgecolor='black')
-
-    plt.title(f"Temps d'exécution par Instance (Rouge = Timeout > 100s)", fontsize=14)
-    plt.ylabel("Temps (secondes)")
-
-    # Rotation des noms
+    plt.figure(figsize=(15, 8))
     ax = plt.gca()
+
+    # --- DESSIN DES BARRES ---
+    for i, row in df.iterrows():
+        nom = row[col_nom]
+        temps = row[col_temps]
+
+        if temps > 100:
+            plt.bar(nom, 100, color='red', edgecolor='black', alpha=0.8)
+            plt.text(nom, 101, 'TO', color='red', ha='center', va='bottom',
+                     fontweight='bold', fontsize=9)
+        else:
+            plt.bar(nom, temps, color='royalblue', edgecolor='black')
+            plt.text(nom, temps + 1, f'{temps:.2f}s', ha='center', va='bottom', fontsize=8)
+
+    # --- MISE EN FORME ---
+    plt.ylim(0, 115)
+    plt.axhline(y=100, color='red', linestyle='--', alpha=0.3)
+    plt.title(f"Performance : {nom_base}\n(Timeout 100s)", fontsize=14)
+    plt.ylabel("Temps (secondes)")
     plt.xticks(rotation=45, ha='right', fontsize=9)
 
-    # --- MISE EN ROUGE DES LABELS ---
-    # On récupère les étiquettes générées par matplotlib
+    # Couleur des labels X
     labels = ax.get_xticklabels()
     for label in labels:
-        if label.get_text() in indices_trop_longs:
+        nom_inst = label.get_text()
+        valeur_temps = df.loc[df[col_nom] == nom_inst, col_temps].values[0]
+        if valeur_temps > 100:
             label.set_color('red')
-            label.set_weight('bold') # Un peu de gras pour que ça ressorte
+            label.set_weight('bold')
 
-    plt.grid(axis='y', linestyle='--', alpha=0.6)
+    plt.grid(axis='y', linestyle='--', alpha=0.5)
     plt.tight_layout()
 
-    print(f"Affichage : {len(indices_trop_longs)} instance(s) trop longue(s) détectée(s).")
+    # --- SAUVEGARDE ET AFFICHAGE ---
+    plt.savefig(chemin_sauvegarde)
+    print(f"Graphique sauvegardé sous : {chemin_sauvegarde}")
     plt.show()
 
 if __name__ == "__main__":
