@@ -428,6 +428,21 @@ Le solveur utilise différents types de contraintes pour propager les informatio
         \item la borne supérieure du résultat est réduite pour contenir uniquement les valeurs possibles dans toutes les variables.
     \end{itemize}
 
+    \item \textbf{Subset} : cette contrainte impose qu'un ensemble soit un \emph{sous-ensemble} d'un autre ($\text{var1} \subseteq \text{var2}$). Tous les éléments de var1 doivent obligatoirement être dans var2.
+
+    \textbf{Règle de filtrage} : 
+    \begin{itemize}
+        \item la borne supérieure de var1 est réduite à l'intersection avec la borne supérieure de var2 (var1 ne peut contenir que ce qui est possible dans var2),
+        \item la borne inférieure de var2 est augmentée pour inclure la borne inférieure de var1 (si un élément est certain dans var1, il doit être certain dans var2).
+    \end{itemize}
+
+    \item \textbf{Different} : cette contrainte impose que deux ensembles soient \emph{distincts} ($\text{var1} \neq \text{var2}$). Les deux variables ne peuvent pas être égales.
+    \textbf{Règle de filtrage} : 
+    \begin{itemize}
+        \item une incohérence est détectée immédiatement si les deux variables sont complètement déterminées et possèdent exactement les mêmes éléments,
+        \item tant que les variables ne sont pas entièrement déterminées, la contrainte peut potentiellement être satisfaite par des choix divergents.
+    \end{itemize}
+
 
     \item \textbf{CardinalityConstraint} : cette contrainte impose qu'une variable contienne exactement un nombre donné d'éléments. 
 
