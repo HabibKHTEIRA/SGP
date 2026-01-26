@@ -83,8 +83,94 @@ class Intersection(Constraint):
         return super().get_variables() + [self.result]
     
 
+class Difference(Constraint):
+    def __init__(self, vars, result):
+        super().__init__(vars)
+        self.result = result
 
+    def reduction(self, variables):
+        changed = set()
+        
+        upper = variables[self.vars[0]].upper_bound() - variables[self.vars[1]].lower_bound()
+        
+        if not variables[self.result].upper_bound().issuperset(upper):
+            variables[self.result]._upper_bound = upper
+            changed.add(self.result)
+        
+        lower = variables[self.vars[0]].lower_bound() - variables[self.vars[1]].upper_bound()
+        
+        if not variables[self.result].lower_bound().issuperset(lower):
+            variables[self.result]._lower_bound = lower
+            changed.add(self.result)
+        
+        return changed
     
+    def evaluate(self, variables):
+        return variables[self.result].lower_bound() == (
+            variables[self.vars[0]].lower_bound() - variables[self.vars[1]].lower_bound()
+        )
+    
+    def get_variables(self):
+        return super().get_variables() + [self.result]
+    
+
+class Subset(Constraint):
+    """
+    Contrainte de sous-ensemble: var1 ⊆ var2
+    (tous les éléments de var1 doivent être dans var2)
+    """
+    def __init__(self, vars):
+        super().__init__(vars)
+    
+    def reduction(self, variables):
+        changed = set()
+        
+        upper_var1 = variables[self.vars[0]].upper_bound() & variables[self.vars[1]].upper_bound()
+        
+        if not variables[self.vars[0]].upper_bound().issuperset(upper_var1):
+            variables[self.vars[0]]._upper_bound = upper_var1
+            changed.add(self.vars[0])
+        
+        lower_var2 = variables[self.vars[1]].lower_bound() | variables[self.vars[0]].lower_bound()
+        
+        if not variables[self.vars[1]].lower_bound().issuperset(lower_var2):
+            variables[self.vars[1]]._lower_bound = lower_var2
+            changed.add(self.vars[1])
+        
+        return changed
+    
+    def evaluate(self, variables):
+        return variables[self.vars[0]].lower_bound().issubset(
+            variables[self.vars[1]].lower_bound()
+        )
+    
+    def get_variables(self):
+        return super().get_variables()
+
+class Different(Constraint):
+    """
+    Contrainte de différence: var1 ≠ var2
+    (var1 et var2 ne peuvent pas être égaux)
+    """
+    def __init__(self, vars):
+        super().__init__(vars)
+    
+    def reduction(self, variables):
+        changed = set()
+
+        if(
+            variables[self.vars[0]].determined() and variables[self.vars[1]].determined()
+            and variables[self.vars[0]].lower_bound == variables[self.vars[1]].lower_bound
+        ):
+            raise ValueError("contrainte 'Different' insatisfaisable")
+        
+        return changed
+    
+    def evaluate(self, variables):
+        return variables[self.vars[0]].lower_bound() != variables[self.vars[1]].lower_bound()
+    
+    def get_variables(self):
+        return super().get_variables()
     
 class CardinalityConstraint(Constraint):
     def __init__(self, vars, card):
